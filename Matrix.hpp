@@ -160,8 +160,6 @@ private:
         std::atomic_long current(0);// get guarantee that every cell will be counted only one time by the only thread
         size_t max(first.height() * second.width());// max value for cursor
 
-        std::vector<int> vec(100);
-
         auto worker = [&]() {// thread func
 
             while (true) {
