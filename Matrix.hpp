@@ -86,7 +86,7 @@ template<typename T, class Container = Buffer<T> >
 class AbstractMatrix {
 private:
 
-    static  size_t thread_cnt_;
+    static size_t thread_cnt_;
 
     virtual void multiplier(const AbstractMatrix<T, Container> &first, const AbstractMatrix<T, Container> &second) = 0;
 
@@ -122,11 +122,10 @@ public:
 
     virtual AbstractMatrix &operator=(const AbstractMatrix &other);
 
-    bool operator ==(const AbstractMatrix& other){
-        for(size_t i = 0; i < height_; ++i){
-            for(size_t j = 0; j < width_; ++j){
-                if(matrix_[i][j] != other.matrix_[i][j]){
-                    std::cout << other.matrix_[i][j] << std::endl;
+    bool operator==(const AbstractMatrix &other) {
+        for (size_t i = 0; i < height_; ++i) {
+            for (size_t j = 0; j < width_; ++j) {
+                if (matrix_[i][j] != other.matrix_[i][j]) {
                     return false;
                 }
             }
@@ -175,10 +174,7 @@ void AbstractMatrix<T, Container>::read(StreamClass &strm) {
     for (int i = 0; i < height_; ++i) {
         for (int j = 0; j < width_; ++j) {
             int temp;
-            strm >> temp;
-            //matrix_[i][j] = static_cast<std::atomic<int>>(temp);
-            matrix_[i][j]= temp;
-            //strm >> matrix_[i][j];
+            strm >> matrix_[i][j];
         }
     }
 }
@@ -226,88 +222,50 @@ private:
 
         size_t step = first.height() / AbstractMatrix<T, Container>::get_thread_cnt();
 
-        if(step == 0){
+        if (step == 0) {
             step = first.height();
         }
 
         std::atomic_long current(0);
-        //size_t current = 0;
-        std::atomic_long max(first.height()* second.width());
+        std::atomic_long max(first.height() * second.width());
 
         std::mutex mut;
         int size = 0;
         std::vector<int> vec(100);
 
         Barrier barrier(AbstractMatrix<T, Container>::get_thread_cnt());
-        auto worker = [&](const size_t left_border, const size_t right_border) {
+        auto worker = [&]() {
 
-            //std::vector<std::pair<int, int>>v;
-            while (current < max){
-                //mut.lock();
+            while (true) {
                 size_t copy = current.fetch_add(1);
-                //mut.unlock();
-                //size_t  copy = current++;
-//                if(copy >= max){
-//                    break;
-//                }
+                if (copy >= max) {
+                    break;
+                }
                 size_t x = copy % 100;
                 size_t y = copy / 100;
-                //++vec[x];
-                //v.emplace_back(x, y);
-                //std::cout <<
 
-                AbstractMatrix<T, Container>::matrix_ [y][x] = 0;
-                for(size_t i = 0; i < first.height(); ++i){
-                    //mut.lock();
-                    AbstractMatrix<T, Container>::matrix_ [y][x]+= first_.matrix_[y][i] * second_.matrix_[i][x];
-                    //mut.unlock();
+                AbstractMatrix<T, Container>::matrix_[y][x] = 0;
+                for (size_t i = 0; i < first.height(); ++i) {
+                    AbstractMatrix<T, Container>::matrix_[y][x] += first_.matrix_[y][i] * second_.matrix_[i][x];
                 }
             }
-
-
-//            mut.lock();
-//            for(auto pair: v){
-//                std::cout << pair.first << ' '<< pair.second<< '\n';
-//            }
-//            size+= v.size();
-//            mut.unlock();
-
-//            for (int i = left_border; i < right_border; ++i) {
-//                for (int j = 0; j < second.height(); ++j) {
-//                    AbstractMatrix<T, Container>::matrix_[i][j] = 0;
-//                    for (int k = 0; k < first.width(); ++k) {
-//                        auto  temp = first_.matrix_[i][k] * second_.matrix_[k][j];
-//                        AbstractMatrix<T, Container>::matrix_[i][j].fetch_add(temp);
-//                    }
-//                }
-//            }
-
-            //barrier.wait();
         };
 
         std::vector<std::thread> workers;
         size_t left_border = 0;
 
         for (size_t thread_num = 1; thread_num < AbstractMatrix<T, Container>::get_thread_cnt(); ++thread_num) {
-            workers.emplace_back(worker, left_border, left_border + step);
+            workers.emplace_back(worker);
             left_border += step;
         }
 
-        worker(left_border, first.height());
-        //workers.emplace_back(worker, left_border, first.height());
+        worker();
 
         for (auto &worker : workers) {
             if (worker.joinable()) {
                 worker.join();
             }
         }
-//        for(auto  it : vec){
-//            std::cout << it << ' ';
-//        }
-//        std::cout << std::endl;
-
-        //std::cout << '\n'<< size<< '\n';
-
     }
 
 protected:
