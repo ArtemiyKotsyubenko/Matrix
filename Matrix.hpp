@@ -11,7 +11,8 @@
 #ifndef MATRIX_MATRIX_HPP
 #define MATRIX_MATRIX_HPP
 
-template<typename T, class Container = Buffer<T> >
+template<typename T, class Container = Buffer<T>>/*Container mast have constructor from u_long, u_long and represent
+ * 2D array (height* width) and handle T& [y][x] call correctly*/
 class AbstractMatrix {
 private:
 
