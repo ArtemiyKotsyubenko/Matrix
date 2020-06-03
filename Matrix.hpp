@@ -89,7 +89,7 @@ size_t AbstractMatrix<T, Container>::thread_cnt_ = std::thread::hardware_concurr
 
 
 template<template<typename V, class C> class DerivedMatrix, typename U, class Cont>
-// friend operator* for Basic class.(and all derived, so we needn't define  friend operators for every basic class)
+// friend operator* for Basic class.(and all derived, so we needn't define  friend operators for every derived class)
 const std::enable_if_t<std::is_base_of<AbstractMatrix<U, Cont>, DerivedMatrix<U, Cont>>::value, DerivedMatrix<U, Cont>>
 operator*(const DerivedMatrix<U, Cont> &first, const DerivedMatrix<U, Cont> &second) {
 
