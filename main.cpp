@@ -2,10 +2,6 @@
 #include <fstream>
 #include "Matrix.hpp"
 
-constexpr int max(int f, int s) {
-    return f > s ? f : s;
-}
-
 template<typename T>
 class test{
 public:
@@ -32,8 +28,8 @@ int main() {
     std::cout << (res == matrix3)<< std::endl;
 
 
-    //matrix3.write(std::cout);
-    std::cout << std::endl;
+    matrix3.write(output);
+    //std::cout << std::endl;
     //res.write(std::cout);
     return 0;
 }
