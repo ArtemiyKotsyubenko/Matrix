@@ -57,7 +57,7 @@ public:
 
     virtual AbstractMatrix &operator=(const AbstractMatrix &other);
 
-    bool operator==(const AbstractMatrix &other) {
+    virtual bool operator==(const AbstractMatrix &other) {// you can use more effective algorithm in derived class
         for (size_t i = 0; i < height_; ++i) {
             for (size_t j = 0; j < width_; ++j) {
                 if (matrix_[i][j] != other.matrix_[i][j]) {
