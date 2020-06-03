@@ -21,7 +21,8 @@ private:
 
     /*We definitely sure that friend operator*  for basic class such has template that allows to use it only derived
      * classes.
-     * to make it work do reinterpret_cast from AbstractMatrix to your class*/
+     * to make it work do reinterpret_cast from AbstractMatrix to your class
+     * such functions can be added for other arithmetic operators to avoid declaring global friend operators*/
 
     const size_t height_;
     const size_t width_;
