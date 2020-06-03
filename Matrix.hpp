@@ -2,9 +2,6 @@
 // Created by artemiy on 02.06.2020.
 //
 
-#include <vector>
-#include <ios>
-#include <functional>
 #include "Buffer.hpp"
 #include "Barrier.hpp"
 
@@ -86,7 +83,7 @@ template<typename T, class Container = Buffer<T> >
 class AbstractMatrix {
 private:
 
-    static const size_t thread_cnt_ = 3;
+    static  size_t thread_cnt_;
 
     virtual void multiplier(const AbstractMatrix<T, Container> &first, const AbstractMatrix<T, Container> &second) = 0;
 
@@ -122,12 +119,24 @@ public:
 
     virtual AbstractMatrix &operator=(const AbstractMatrix &other);
 
+    bool operator ==(const AbstractMatrix& other){
+        for(size_t i = 0; i < height_; ++i){
+            for(size_t j = 0; j < width_; ++j){
+                if(matrix_[i][j] != other.matrix_[i][j]){
+                    std::cout << other.matrix_[i][j] << std::endl;
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
 
     size_t height() const { return height_; }
 
     size_t width() const { return width_; }
 
-    static void set_thread_cnt(const size_t thread_cnt) noexcept;/* { thread_cnt_ = thread_cnt; }*/
+    static void set_thread_cnt(const size_t thread_cnt) noexcept { thread_cnt_ = thread_cnt; }
 
     static size_t get_thread_cnt() noexcept { return thread_cnt_; }
 
@@ -140,6 +149,8 @@ public:
 
 
 };
+
+template<typename T, class Container> size_t AbstractMatrix<T, Container>::thread_cnt_ = 4;
 
 template<template<typename V, class C> class DerivedMatrix, typename U, class Cont>
 std::enable_if_t<std::is_base_of<AbstractMatrix<U, Cont>, DerivedMatrix<U, Cont>>::value, DerivedMatrix<U, Cont>>
@@ -160,14 +171,12 @@ template<typename StreamClass>
 void AbstractMatrix<T, Container>::read(StreamClass &strm) {
     for (int i = 0; i < height_; ++i) {
         for (int j = 0; j < width_; ++j) {
-            strm >> matrix_[i][j];
+            int temp;
+            strm >> temp;
+            //matrix_[i][j] = static_cast<std::atomic<int>>(temp);
+            matrix_[i][j].store(temp);
+            //strm >> matrix_[i][j];
         }
-    }
-    for (int i = 0; i < height_; ++i) {
-        for (int j = 0; j < width_; ++j) {
-            std::cout << matrix_[i][j] << ' ';
-        }
-        std::cout << '\n';
     }
 }
 
@@ -178,7 +187,6 @@ void AbstractMatrix<T, Container>::write(StreamClass &strm) {
         for (int j = 0; j < width_; ++j) {
             strm << matrix_[i][j] << ' ';
         }
-        std::cout << '\n';
     }
 }
 
@@ -201,13 +209,8 @@ AbstractMatrix<T, Container> &AbstractMatrix<T, Container>::operator=(const Abst
     return *this;
 }
 
-template<typename T, class Container>
-void AbstractMatrix<T, Container>::set_thread_cnt(size_t thread_cnt) noexcept {
-    //thread_cnt_ = thread_cnt;
-}
+//*********************************************************************************************************************
 
-
-//****************************************************************
 template<typename T, typename Container = Buffer<T>>
 class SquareMatrix : public AbstractMatrix<T, Container> {
 private:
@@ -219,17 +222,46 @@ private:
 
 
         size_t step = first.height() / AbstractMatrix<T, Container>::get_thread_cnt();
+
+        if(step == 0){
+            step = first.height();
+        }
+
+        std::atomic_long current(0);
+        std::atomic_long max(first.height()* second.width());
+
         Barrier barrier(AbstractMatrix<T, Container>::get_thread_cnt());
         auto worker = [&](const size_t left_border, const size_t right_border) {
 
-            for (int i = left_border; i < right_border; ++i) {
-                for (int j = 0; j < second.height(); ++j) {
-                    AbstractMatrix<T, Container>::matrix_[i][j] = 0;
-                    for (int k = 0; k < first.width(); ++k) {
-                        AbstractMatrix<T, Container>::matrix_[i][j] += first_.matrix_[i][k] * second_.matrix_[k][j];
-                    }
+            while (current < max){
+                size_t copy = current.fetch_add(1);
+                //size_t  copy = current++;
+                if(copy >= max){
+                    break;
                 }
+                size_t x = copy % first.height();
+                size_t y = copy / second.height();
+
+                AbstractMatrix<T, Container>::matrix_ [y][x] = 0;
+                for(size_t i = 0; i < first.height(); ++i){
+                    AbstractMatrix<T, Container>::matrix_ [y][x]+= first_.matrix_[y][i] * second_.matrix_[i][x];
+                }
+
+
+
+
             }
+
+//            for (int i = left_border; i < right_border; ++i) {
+//                for (int j = 0; j < second.height(); ++j) {
+//                    AbstractMatrix<T, Container>::matrix_[i][j] = 0;
+//                    for (int k = 0; k < first.width(); ++k) {
+//                        auto  temp = first_.matrix_[i][k] * second_.matrix_[k][j];
+//                        AbstractMatrix<T, Container>::matrix_[i][j].fetch_add(temp);
+//                    }
+//                }
+//            }
+
             barrier.wait();
         };
 

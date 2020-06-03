@@ -81,7 +81,7 @@ Buffer<T>::Buffer(const Buffer &other): height_(other.height_), width_(other.wid
     size_t size = height_ * width_;
     proxy_.array_begin_ = array_begin_ = new T[size];
     for(size_t i = 0; i < size; ++i){
-        array_begin_[i] = other.array_begin_[i];
+        array_begin_[i].store  (other.array_begin_[i]);
     }
 }
 
@@ -109,7 +109,7 @@ Buffer<T> &Buffer<T>::operator=(const Buffer &other) {
     }
     size_t size = height_ * width_;
     for(size_t i = 0; i < size; ++i){
-        array_begin_[i] = other.array_begin_[i];
+        array_begin_[i].store (other.array_begin_[i]);
     }
     return *this;
 }
