@@ -12,7 +12,7 @@
 #include <atomic>
 #include <functional>
 
-class Barrier {
+class Barrier {//class for global synchronization
 private:
 
     const u_int threads_count;
@@ -36,12 +36,12 @@ public:
 
     void set_behaviour_before_waking_up(std::function<void()> &&func) {
         behaviour_before_waking_up = func;
-    }
+    }// void function to execute when all threads reached barrier
     void set_behaviour_before_waking_up(std::function<void()> func) {
         behaviour_before_waking_up = func;
     }
 
-    void wait() {
+    void wait() {// call to fall asleep
         if (threads_waiting.fetch_add(1) >= threads_count - 1) {
             threads_waiting.store(0);
             behaviour_before_waking_up();
@@ -52,6 +52,7 @@ public:
         }
     }
 };
+// wasn't used in SquareMatrix
 
 
 #endif //MATRIX_BARRIER_HPP
