@@ -21,15 +21,15 @@ int main() {
 
     //AbstractMatrix::set_multiplier();
 
-    SquareMatrix<std::atomic<int>> matrix1(100);
-    matrix1.set_thread_cnt(2);
+    SquareMatrix<long long > matrix1(100);
+    matrix1.set_thread_cnt(8);
     matrix1.read(first);
     //std::cout << '\n';
     //matrix1.set_multiplier(multiplier<int, Buffer<int>>)
-    SquareMatrix<std::atomic<int>> matrix2(100);
+    SquareMatrix<long long > matrix2(100);
     matrix2.read(second);
 
-    SquareMatrix<std::atomic<int>> res(100);
+    SquareMatrix<long long > res(100);
     res.read(ans);
     //std::cout <<'\n';
 
@@ -38,12 +38,12 @@ int main() {
 
 
 
-    SquareMatrix<std::atomic<int>> matrix3 = matrix1 * matrix2;
+    SquareMatrix<long long > matrix3 = matrix1 * matrix2;
     std::cout << (res == matrix3)<< std::endl;
 
 
-    matrix3.write(std::cout);
+    //matrix3.write(std::cout);
     std::cout << std::endl;
-    res.write(std::cout);
+    //res.write(std::cout);
     return 0;
 }

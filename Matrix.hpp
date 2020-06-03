@@ -4,6 +4,9 @@
 
 #include "Buffer.hpp"
 #include "Barrier.hpp"
+#include <vector>
+#include <exception>
+#include <stdexcept>
 
 #ifndef MATRIX_MATRIX_HPP
 #define MATRIX_MATRIX_HPP
@@ -174,7 +177,7 @@ void AbstractMatrix<T, Container>::read(StreamClass &strm) {
             int temp;
             strm >> temp;
             //matrix_[i][j] = static_cast<std::atomic<int>>(temp);
-            matrix_[i][j].store(temp);
+            matrix_[i][j]= temp;
             //strm >> matrix_[i][j];
         }
     }
@@ -228,29 +231,46 @@ private:
         }
 
         std::atomic_long current(0);
+        //size_t current = 0;
         std::atomic_long max(first.height()* second.width());
+
+        std::mutex mut;
+        int size = 0;
+        std::vector<int> vec(100);
 
         Barrier barrier(AbstractMatrix<T, Container>::get_thread_cnt());
         auto worker = [&](const size_t left_border, const size_t right_border) {
 
+            //std::vector<std::pair<int, int>>v;
             while (current < max){
+                //mut.lock();
                 size_t copy = current.fetch_add(1);
+                //mut.unlock();
                 //size_t  copy = current++;
-                if(copy >= max){
-                    break;
-                }
-                size_t x = copy % first.height();
-                size_t y = copy / second.height();
+//                if(copy >= max){
+//                    break;
+//                }
+                size_t x = copy % 100;
+                size_t y = copy / 100;
+                //++vec[x];
+                //v.emplace_back(x, y);
+                //std::cout <<
 
                 AbstractMatrix<T, Container>::matrix_ [y][x] = 0;
                 for(size_t i = 0; i < first.height(); ++i){
+                    //mut.lock();
                     AbstractMatrix<T, Container>::matrix_ [y][x]+= first_.matrix_[y][i] * second_.matrix_[i][x];
+                    //mut.unlock();
                 }
-
-
-
-
             }
+
+
+//            mut.lock();
+//            for(auto pair: v){
+//                std::cout << pair.first << ' '<< pair.second<< '\n';
+//            }
+//            size+= v.size();
+//            mut.unlock();
 
 //            for (int i = left_border; i < right_border; ++i) {
 //                for (int j = 0; j < second.height(); ++j) {
@@ -262,7 +282,7 @@ private:
 //                }
 //            }
 
-            barrier.wait();
+            //barrier.wait();
         };
 
         std::vector<std::thread> workers;
@@ -274,12 +294,19 @@ private:
         }
 
         worker(left_border, first.height());
+        //workers.emplace_back(worker, left_border, first.height());
 
         for (auto &worker : workers) {
             if (worker.joinable()) {
                 worker.join();
             }
         }
+//        for(auto  it : vec){
+//            std::cout << it << ' ';
+//        }
+//        std::cout << std::endl;
+
+        //std::cout << '\n'<< size<< '\n';
 
     }
 
