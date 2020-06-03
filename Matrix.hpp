@@ -208,7 +208,7 @@ public:
 
     SquareMatrix(const SquareMatrix &other) : AbstractMatrix<T, Container>(other) {}
 
-    SquareMatrix(SquareMatrix &&other) : AbstractMatrix<T, Container>(other) {}
+    SquareMatrix(SquareMatrix &&other) : AbstractMatrix<T, Container>(std::move(other)) {}
 
     ~SquareMatrix() = default;
 };
@@ -221,7 +221,7 @@ SquareMatrix<T, Container> &SquareMatrix<T, Container>::operator=(const SquareMa
 
 template<typename T, typename Container>
 SquareMatrix<T, Container> &SquareMatrix<T, Container>::operator=(SquareMatrix &&other) {
-    AbstractMatrix<T, Container>::operator=(other);
+    AbstractMatrix<T, Container>::operator=(std::move(other));
     return *this;
 }
 
