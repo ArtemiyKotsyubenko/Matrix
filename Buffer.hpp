@@ -18,7 +18,7 @@ private:
     const size_t height_;
     const size_t width_;
 
-    struct proxy {
+    struct proxy {// class helper for maintaining usual access by [][]
     private:
         T *ptr_ = nullptr;
     public:

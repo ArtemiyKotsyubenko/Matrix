@@ -144,18 +144,15 @@ public:
 
 
     template<template<typename V, class C> class DerivedMatrix, typename U, class Cont>
-    friend typename std::enable_if_t<std::is_base_of<AbstractMatrix<U, Cont>, DerivedMatrix<U, Cont>>::value, DerivedMatrix<U, Cont>>
+    friend const typename std::enable_if_t<std::is_base_of<AbstractMatrix<U, Cont>, DerivedMatrix<U, Cont>>::value, DerivedMatrix<U, Cont>>
     operator*(const DerivedMatrix<U, Cont> &first, const DerivedMatrix<U, Cont> &second);
-
-public:
-
-
 };
 
 template<typename T, class Container> size_t AbstractMatrix<T, Container>::thread_cnt_ = 4;
 
 template<template<typename V, class C> class DerivedMatrix, typename U, class Cont>
-std::enable_if_t<std::is_base_of<AbstractMatrix<U, Cont>, DerivedMatrix<U, Cont>>::value, DerivedMatrix<U, Cont>>
+// friend operator* for Base class.
+const std::enable_if_t<std::is_base_of<AbstractMatrix<U, Cont>, DerivedMatrix<U, Cont>>::value, DerivedMatrix<U, Cont>>
 operator*(const DerivedMatrix<U, Cont> &first, const DerivedMatrix<U, Cont> &second) {
 
     if (first.width() != second.height()) {
@@ -166,6 +163,7 @@ operator*(const DerivedMatrix<U, Cont> &first, const DerivedMatrix<U, Cont> &sec
     AbstractMatrix<U, Cont> &ref = new_matrix;
     ref.multiplier(first, second);
     return new_matrix;
+    /*will work with any derived class*/
 }
 
 template<typename T, class Container>
@@ -219,18 +217,9 @@ private:
         auto &first_ = reinterpret_cast<const SquareMatrix &>(first);
         auto &second_ = reinterpret_cast<const SquareMatrix &>(second);
 
-
-        size_t step = first.height() / AbstractMatrix<T, Container>::get_thread_cnt();
-
-        if (step == 0) {
-            step = first.height();
-        }
-
         std::atomic_long current(0);
         std::atomic_long max(first.height() * second.width());
 
-        std::mutex mut;
-        int size = 0;
         std::vector<int> vec(100);
 
         Barrier barrier(AbstractMatrix<T, Container>::get_thread_cnt());
@@ -252,11 +241,9 @@ private:
         };
 
         std::vector<std::thread> workers;
-        size_t left_border = 0;
 
         for (size_t thread_num = 1; thread_num < AbstractMatrix<T, Container>::get_thread_cnt(); ++thread_num) {
             workers.emplace_back(worker);
-            left_border += step;
         }
 
         worker();
@@ -271,11 +258,32 @@ private:
 protected:
 
 public:
-    explicit SquareMatrix(const size_t size) : AbstractMatrix<T, Container>(size, size) {};
 
-    explicit SquareMatrix(const size_t size, const size_t size1) : AbstractMatrix<T, Container>(size, size) {};
+    SquareMatrix &operator=(const SquareMatrix &other);
+
+    SquareMatrix &operator=(SquareMatrix &&other);
+
+    explicit SquareMatrix(const size_t size) : AbstractMatrix<T, Container>(size, size) {}
+
+    SquareMatrix(const size_t size, const size_t size1) : AbstractMatrix<T, Container>(size, size) {}
+
+    SquareMatrix(const SquareMatrix &other) : AbstractMatrix<T, Container>(other) {}
+
+    SquareMatrix(SquareMatrix &&other) : AbstractMatrix<T, Container>(other) {}
 
     ~SquareMatrix() = default;
 };
+
+template<typename T, typename Container>
+SquareMatrix<T, Container> &SquareMatrix<T, Container>::operator=(const SquareMatrix &other) {
+    AbstractMatrix<T, Container>::operator=(other);
+    return *this;
+}
+
+template<typename T, typename Container>
+SquareMatrix<T, Container> &SquareMatrix<T, Container>::operator=(SquareMatrix &&other) {
+    AbstractMatrix<T, Container>::operator=(other);
+    return *this;
+}
 
 #endif //MATRIX_MATRIX_HPP

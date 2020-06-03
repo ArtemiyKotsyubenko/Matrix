@@ -2,12 +2,6 @@
 #include <fstream>
 #include "Matrix.hpp"
 
-template<typename T>
-class test{
-public:
-    test() = delete ;
-};
-
 int main() {
 
     std::ifstream first("first.txt");
