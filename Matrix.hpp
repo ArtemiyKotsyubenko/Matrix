@@ -80,8 +80,8 @@ public:
     template<template<typename V, class C> class DerivedMatrix, typename U, class Cont>
     friend
     const typename std::enable_if_t
-    <std::is_base_of<AbstractMatrix<U, Cont>, DerivedMatrix<U, Cont>>::value,
-    DerivedMatrix<U, Cont>>
+            <std::is_base_of<AbstractMatrix<U, Cont>, DerivedMatrix<U, Cont>>::value,
+                    DerivedMatrix<U, Cont>>
     operator*(const DerivedMatrix<U, Cont> &first, const DerivedMatrix<U, Cont> &second);
 };
 
@@ -153,8 +153,7 @@ template<typename T, typename Container = Buffer<T>>
 class SquareMatrix : public AbstractMatrix<T, Container> {
 private:
 
-    void multiplier(const AbstractMatrix<T, Container> &first,
-                    const AbstractMatrix<T, Container> &second) override {
+    void multiplier(const AbstractMatrix<T, Container> &first, const AbstractMatrix<T, Container> &second) override {
         auto &first_ = reinterpret_cast<const SquareMatrix &>(first);
         auto &second_ = reinterpret_cast<const SquareMatrix &>(second);
 
